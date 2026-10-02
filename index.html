@@ -37,7 +37,7 @@
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link
-      href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap"
+      href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800;900&display=swap"
       rel="stylesheet"
     />
 
@@ -90,7 +90,7 @@
       }
 
       .gold-border-glow {
-        box-shadow: 0 0 20px rgba(212, 175, 55, 0.25);
+        box-shadow: 0 0 25px rgba(212, 175, 55, 0.35);
       }
 
       .gold-gradient-text {
@@ -102,6 +102,22 @@
         );
         -webkit-background-clip: text;
         -webkit-text-fill-color: transparent;
+      }
+
+      /* Animasi Pulse & Glowing khusus Pemenang Tunggal */
+      @keyframes winnerPulse {
+        0%,
+        100% {
+          transform: scale(1);
+          filter: drop-shadow(0 0 15px rgba(255, 224, 102, 0.5));
+        }
+        50% {
+          transform: scale(1.03);
+          filter: drop-shadow(0 0 35px rgba(255, 224, 102, 0.9));
+        }
+      }
+      .winner-featured-anim {
+        animation: winnerPulse 2.2s infinite ease-in-out;
       }
 
       /* Wheel Pointer Arrow Pulse */
@@ -116,17 +132,6 @@
       }
       .pointer-animated {
         animation: pointerPulse 2s infinite ease-in-out;
-      }
-
-      /* Modal Fade Animation */
-      .modal-enter {
-        opacity: 0;
-        transform: scale(0.9);
-      }
-      .modal-enter-active {
-        opacity: 1;
-        transform: scale(1);
-        transition: all 0.3s ease-out;
       }
     </style>
   </head>
@@ -276,7 +281,7 @@
               id="input-winner-count"
               min="1"
               max="9999"
-              value="10"
+              value="1"
               class="w-14 bg-transparent text-brand-gold font-bold focus:outline-none text-xs text-center"
             />
           </div>
@@ -312,7 +317,7 @@
               class="w-4 h-4 rounded text-brand-medium focus:ring-brand-gold bg-slate-900 border-emerald-700"
             />
             <span class="text-emerald-200 text-xs"
-              >Hapus Pemenang dari Daftar</span
+              >Hapus Peserta Terpilih dari Daftar</span
             >
           </label>
         </div>
@@ -453,7 +458,6 @@
             id="participants-list-container"
             class="max-h-[300px] overflow-y-auto space-y-1.5 pr-1 my-1"
           >
-            <!-- Items inserted via JS -->
             <div class="text-center py-8 text-emerald-600/70 text-xs">
               Belum ada peserta terdaftar.
             </div>
@@ -468,7 +472,7 @@
           <div class="flex items-center justify-between">
             <span
               class="text-xs font-bold text-emerald-300 uppercase tracking-wider"
-              >Riwayat Hasil Pengundian</span
+              >Riwayat Hasil</span
             >
             <button
               id="btn-export-csv"
@@ -484,32 +488,34 @@
             class="max-h-[320px] overflow-y-auto space-y-3 pr-1 my-1"
           >
             <div class="text-center py-8 text-emerald-600/70 text-xs">
-              Belum ada riwayat undian.
+              Belum ada riwayat .
             </div>
           </div>
         </div>
       </section>
     </main>
 
-    <!-- WINNER MODAL POPUP (10 WINNERS REVEAL) -->
+    <!-- WINNER MODAL POPUP (DYNAMIC: SINGLE OR MULTI WINNERS) -->
     <div
       id="winner-modal"
-      class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/80 backdrop-blur-md hidden transition-opacity duration-300 opacity-0"
+      class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/85 backdrop-blur-md hidden transition-opacity duration-300 opacity-0"
     >
       <div
+        id="modal-card-box"
         class="glass-panel w-full max-w-2xl rounded-3xl border-2 border-brand-gold gold-border-glow p-6 sm:p-8 flex flex-col max-h-[90vh] relative overflow-hidden text-center transform scale-95 transition-transform duration-300"
       >
         <!-- Close Button Top Right -->
         <button
           id="btn-close-modal"
-          class="absolute top-4 right-4 w-9 h-9 rounded-full bg-emerald-950 border border-emerald-700 text-emerald-300 hover:text-white hover:bg-emerald-800 flex items-center justify-center transition-colors"
+          class="absolute top-4 right-4 w-9 h-9 rounded-full bg-emerald-950 border border-emerald-700 text-emerald-300 hover:text-white hover:bg-emerald-800 flex items-center justify-center transition-colors z-20"
         >
           <i class="fa-solid fa-xmark text-lg"></i>
         </button>
 
-        <!-- Modal Header Header -->
-        <div class="mb-4">
+        <!-- Modal Header -->
+        <div class="mb-2">
           <div
+            id="modal-icon-badge"
             class="inline-flex items-center justify-center w-16 h-16 rounded-full bg-gradient-to-tr from-brand-gold via-yellow-300 to-yellow-600 text-slate-950 text-3xl shadow-lg mb-2"
           >
             <i class="fa-solid fa-trophy"></i>
@@ -518,47 +524,41 @@
             id="modal-winners-title"
             class="text-2xl sm:text-3xl font-black gold-gradient-text"
           >
-            10 ORANG TERPILIH!
+            PESERTA TERPILIH!
           </h2>
           <p
             id="modal-round-subtitle"
             class="text-xs sm:text-sm text-emerald-200/80"
           >
-            Selamat kepada para pemenang undian putaran ini
+            Selamat kepada para peserta terpilih putaran ini
           </p>
         </div>
 
-        <!-- 10 Winners Grid List -->
+        <!-- Dynamic Container (Rendered by JS for Single or Multi Winners) -->
         <div
           id="modal-winners-grid"
-          class="grid grid-cols-1 sm:grid-cols-2 gap-2.5 overflow-y-auto my-2 p-2 text-left max-h-[340px]"
+          class="my-2 p-2 text-left max-h-[360px] overflow-y-auto"
         >
-          <!-- 10 Winners Cards Rendered by JS -->
+          <!-- Dynamic Winner Cards -->
         </div>
 
         <!-- Modal Footer Controls -->
         <div
-          class="mt-5 pt-4 border-t border-emerald-800/80 flex flex-wrap items-center justify-center sm:justify-between gap-3"
+          class="mt-4 pt-4 border-t border-emerald-800/80 flex flex-wrap items-center justify-center sm:justify-between gap-3"
         >
           <button
             id="btn-copy-winners"
             class="px-4 py-2.5 rounded-xl bg-emerald-800 hover:bg-emerald-700 text-emerald-100 font-bold text-xs sm:text-sm transition-all flex items-center gap-2"
           >
             <i class="fa-solid fa-copy text-brand-gold"></i>
-            <span id="btn-copy-winners-label">Salin 10 Nama</span>
+            <span id="btn-copy-winners-label">Salin Nama Peserta Terpilih</span>
           </button>
 
           <div class="flex items-center gap-2">
-            <button
-              id="btn-remove-winners-modal"
-              class="px-4 py-2.5 rounded-xl bg-red-950 hover:bg-red-900 border border-red-800/80 text-red-200 font-bold text-xs sm:text-sm transition-all flex items-center gap-2"
-            >
-              <i class="fa-solid fa-user-minus"></i>
-              <span>Hapus Pemenang Dari Pool</span>
-            </button>
+            <button id="btn-remove-winners-modal" class=""></button>
             <button
               id="btn-close-modal-main"
-              class="px-5 py-2.5 rounded-xl bg-gradient-to-r from-brand-gold to-yellow-500 text-slate-950 font-black text-xs sm:text-sm transition-all hover:brightness-110"
+              class="px-5 py-2.5 rounded-xl bg-gradient-to-r from-brand-gold to-yellow-500 text-slate-950 font-black text-xs sm:text-sm transition-all hover:brightness-110 shadow-lg"
             >
               Selesai
             </button>
@@ -581,11 +581,11 @@
           <i class="fa-solid fa-triangle-exclamation"></i>
         </div>
         <h2 class="text-xl sm:text-2xl font-black text-white mb-2">
-          Restart Undian?
+          Restart Spin Wheel?
         </h2>
         <p class="text-sm text-emerald-200/80 mb-6">
-          Semua peserta, riwayat pemenang, dan data tersimpan akan dihapus.
-          Tindakan ini tidak bisa dibatalkan.
+          Semua peserta, riwayat peserta terpilih, dan data tersimpan akan
+          dihapus. Tindakan ini tidak bisa dibatalkan.
         </p>
         <div class="flex items-center justify-center gap-3">
           <button
@@ -614,8 +614,7 @@
     <footer
       class="max-w-7xl w-full mx-auto mt-6 text-center text-xs text-emerald-500/60 py-2"
     >
-      Spin Wheel Generator &copy; 2026 &bull; Tema Dominan Hijau Tua & Emas
-      &bull; Siap Mengolah Ribuan Data Peserta
+      Spin Wheel Bakti Mulya 400 &copy; 2026
     </footer>
 
     <!-- JAVASCRIPT LOGIC -->
@@ -624,13 +623,13 @@
       const STORAGE_KEY = "spinwheel-bm-state";
       const state = {
         participants: [],
-        winnersHistory: [], // Array of { round: 1, date: '', winners: [] }
+        winnersHistory: [],
         roundCount: 0,
         isSpinning: false,
         soundEnabled: true,
         autoRemoveWinners: true,
-        duration: 6, // Seconds
-        winnerCount: 10,
+        duration: 6,
+        winnerCount: 1, // Default set ke 1
         wheelRotation: 0,
         animationFrameId: null,
       };
@@ -657,27 +656,20 @@
           const raw = localStorage.getItem(STORAGE_KEY);
           if (!raw) return;
           const saved = JSON.parse(raw);
-          if (Array.isArray(saved.participants)) {
+          if (Array.isArray(saved.participants))
             state.participants = saved.participants;
-          }
-          if (Array.isArray(saved.winnersHistory)) {
+          if (Array.isArray(saved.winnersHistory))
             state.winnersHistory = saved.winnersHistory;
-          }
-          if (typeof saved.roundCount === "number") {
+          if (typeof saved.roundCount === "number")
             state.roundCount = saved.roundCount;
-          }
-          if (typeof saved.soundEnabled === "boolean") {
+          if (typeof saved.soundEnabled === "boolean")
             state.soundEnabled = saved.soundEnabled;
-          }
-          if (typeof saved.autoRemoveWinners === "boolean") {
+          if (typeof saved.autoRemoveWinners === "boolean")
             state.autoRemoveWinners = saved.autoRemoveWinners;
-          }
-          if (typeof saved.duration === "number") {
+          if (typeof saved.duration === "number")
             state.duration = saved.duration;
-          }
-          if (typeof saved.winnerCount === "number" && saved.winnerCount >= 1) {
+          if (typeof saved.winnerCount === "number" && saved.winnerCount >= 1)
             state.winnerCount = saved.winnerCount;
-          }
         } catch (e) {}
       }
 
@@ -689,20 +681,17 @@
       function syncWinnerCountLabels() {
         const n = getWinnerCount();
         const centerLabel = document.getElementById("center-spin-label");
-        if (centerLabel) centerLabel.innerText = `SPIN ${n}`;
-        const modalTitle = document.getElementById("modal-winners-title");
-        if (modalTitle) modalTitle.innerText = `${n} ORANG TERPILIH!`;
-        const copyLabel = document.getElementById("btn-copy-winners-label");
-        if (copyLabel) copyLabel.innerText = `Salin ${n} Nama`;
+        if (centerLabel) centerLabel.innerText = n === 1 ? "SPIN" : `SPIN ${n}`;
         const input = document.getElementById("input-winner-count");
         if (input && String(input.value) !== String(n)) input.value = n;
       }
 
-      // Web Audio API Synth Generator
+      // Web Audio API Synth Generator - Spin Wheel & Grand Fanfare Engine
       class SoundEngine {
         constructor() {
           this.ctx = null;
-          this.drumroll = null;
+          this.lastRotation = 0;
+          this.accumulatedAngle = 0;
         }
 
         init() {
@@ -713,6 +702,78 @@
           if (this.ctx && this.ctx.state === "suspended") {
             this.ctx.resume();
           }
+        }
+
+        startSpinSound(initialRotation = 0) {
+          if (!state.soundEnabled) return;
+          this.init();
+          if (!this.ctx) return;
+          this.lastRotation = initialRotation;
+          this.accumulatedAngle = 0;
+        }
+
+        updateSpinSound(currentRotation, progress = 0) {
+          if (!state.soundEnabled || !this.ctx) return;
+
+          const numPegs = 24;
+          const pegAngle = (2 * Math.PI) / numPegs;
+
+          const delta = Math.abs(currentRotation - this.lastRotation);
+          this.lastRotation = currentRotation;
+          this.accumulatedAngle += delta;
+
+          while (this.accumulatedAngle >= pegAngle) {
+            this.accumulatedAngle -= pegAngle;
+            this.playTick(progress);
+          }
+        }
+
+        stopSpinSound(immediate = false) {
+          this.accumulatedAngle = 0;
+        }
+
+        playTick(progress = 0) {
+          if (!state.soundEnabled || !this.ctx) return;
+          try {
+            const t = this.ctx.currentTime;
+
+            // 1. Suara Ketukan Utama
+            const osc = this.ctx.createOscillator();
+            const gain = this.ctx.createGain();
+
+            const baseFreq = 1350 + (Math.random() * 180 - 90);
+            osc.type = "triangle";
+            osc.frequency.setValueAtTime(baseFreq, t);
+            osc.frequency.exponentialRampToValueAtTime(220, t + 0.015);
+
+            const vol = 0.32 + (1 - progress) * 0.15;
+            gain.gain.setValueAtTime(vol, t);
+            gain.gain.exponentialRampToValueAtTime(0.0001, t + 0.018);
+
+            osc.connect(gain);
+            gain.connect(this.ctx.destination);
+            osc.start(t);
+            osc.stop(t + 0.022);
+
+            // 2. Resonansi Jarum/Pasak Logam
+            const resOsc = this.ctx.createOscillator();
+            const resGain = this.ctx.createGain();
+            resOsc.type = "sine";
+            resOsc.frequency.setValueAtTime(
+              820 + (Math.random() * 120 - 60),
+              t,
+            );
+            resGain.gain.setValueAtTime(0.18, t);
+            resGain.gain.exponentialRampToValueAtTime(0.0001, t + 0.03);
+
+            resOsc.connect(resGain);
+            resGain.connect(this.ctx.destination);
+            resOsc.start(t);
+            resOsc.stop(t + 0.035);
+
+            // 3. Snap Noise Jarum Indikator
+            this.playNoiseBurst(0, 0.008, 0.12, 3500);
+          } catch (e) {}
         }
 
         createNoiseBuffer(seconds) {
@@ -768,114 +829,13 @@
           } catch (e) {}
         }
 
-        startDrumroll() {
-          if (!state.soundEnabled) return;
-          this.init();
-          if (!this.ctx) return;
-          this.stopDrumroll(true);
-
-          try {
-            const now = this.ctx.currentTime;
-            const src = this.ctx.createBufferSource();
-            src.buffer = this.createNoiseBuffer(1);
-            src.loop = true;
-
-            const body = this.ctx.createBiquadFilter();
-            body.type = "bandpass";
-            body.frequency.value = 220;
-            body.Q.value = 3.2;
-
-            const sizzle = this.ctx.createBiquadFilter();
-            sizzle.type = "highpass";
-            sizzle.frequency.value = 2500;
-            sizzle.Q.value = 0.6;
-
-            const bodyGain = this.ctx.createGain();
-            bodyGain.gain.value = 0.9;
-            const sizzleGain = this.ctx.createGain();
-            sizzleGain.gain.value = 0.45;
-
-            const pulse = this.ctx.createGain();
-            pulse.gain.value = 0.42;
-
-            const master = this.ctx.createGain();
-            master.gain.setValueAtTime(0.0001, now);
-            master.gain.exponentialRampToValueAtTime(0.85, now + 0.12);
-
-            const lfo = this.ctx.createOscillator();
-            lfo.type = "square";
-            lfo.frequency.setValueAtTime(16, now);
-
-            const lfoDepth = this.ctx.createGain();
-            lfoDepth.gain.value = 0.38;
-            lfo.connect(lfoDepth);
-            lfoDepth.connect(pulse.gain);
-
-            src.connect(body);
-            body.connect(bodyGain);
-            bodyGain.connect(pulse);
-            src.connect(sizzle);
-            sizzle.connect(sizzleGain);
-            sizzleGain.connect(pulse);
-            pulse.connect(master);
-            master.connect(this.ctx.destination);
-
-            src.start(now);
-            lfo.start(now);
-
-            this.drumroll = { src, lfo, master, pulse };
-          } catch (e) {}
-        }
-
-        updateDrumroll(progress) {
-          if (!this.drumroll || !this.ctx) return;
-          const rate = 18 + (1 - progress) * 10;
-          try {
-            this.drumroll.lfo.frequency.setTargetAtTime(
-              rate,
-              this.ctx.currentTime,
-              0.05,
-            );
-            this.drumroll.master.gain.setTargetAtTime(
-              0.55 + progress * 0.45,
-              this.ctx.currentTime,
-              0.08,
-            );
-          } catch (e) {}
-        }
-
-        stopDrumroll(immediate = false) {
-          if (!this.drumroll) return;
-          const nodes = this.drumroll;
-          this.drumroll = null;
-          try {
-            const now = this.ctx ? this.ctx.currentTime : 0;
-            if (!immediate && nodes.master) {
-              nodes.master.gain.cancelScheduledValues(now);
-              nodes.master.gain.setValueAtTime(
-                nodes.master.gain.value || 0.3,
-                now,
-              );
-              nodes.master.gain.exponentialRampToValueAtTime(
-                0.0001,
-                now + 0.08,
-              );
-            }
-            const stopAt = immediate ? now : now + 0.1;
-            nodes.src.stop(stopAt);
-            nodes.lfo.stop(stopAt);
-          } catch (e) {}
-        }
-
+        // Efek Suara Pemenang Standar (Banyak Pemenang)
         playHooray() {
           if (!state.soundEnabled) return;
           this.init();
           if (!this.ctx) return;
 
           this.playNoiseBurst(0, 0.7, 0.32, 4500);
-          this.playNoiseBurst(0.02, 0.45, 0.2, 1800);
-          this.playTone(90, 0, 0.18, "sine", 0.28);
-
           this.playCrowdCheer();
           this.playHoorayVoices();
 
@@ -884,39 +844,81 @@
             [523.25, 0.08, 0.4],
             [659.25, 0.16, 0.45],
             [783.99, 0.24, 0.7],
-            [1046.5, 0.4, 0.9],
           ];
           horns.forEach(([freq, start, dur]) => {
             this.playTone(freq, start, dur, "sawtooth", 0.12);
-            this.playTone(freq * 2, start + 0.02, dur * 0.7, "triangle", 0.07);
+          });
+        }
+
+        // Efek Suara Pemenang Tunggal MEWAH & MERIAH (Fanfare Brass + Fireworks + Cheering)
+        playGrandWinnerSound() {
+          if (!state.soundEnabled) return;
+          this.init();
+          if (!this.ctx) return;
+
+          // 1. Fanfare Brass Trumpet Triad (Arpeggio Melodi Kemenangan Megah)
+          const fanfare = [
+            { f: 523.25, start: 0.0, dur: 0.2 }, // C5
+            { f: 659.25, start: 0.15, dur: 0.2 }, // E5
+            { f: 783.99, start: 0.3, dur: 0.2 }, // G5
+            { f: 1046.5, start: 0.45, dur: 1.4 }, // C6 (Melengking sustained)
+          ];
+
+          fanfare.forEach(({ f, start, dur }) => {
+            this.playTone(f, start, dur, "sawtooth", 0.28);
+            this.playTone(f * 0.5, start, dur, "triangle", 0.35); // Bass harmonic
+            if (f === 1046.5) {
+              // Harmony Accord pada puncak trompet
+              this.playTone(
+                1318.51,
+                start + 0.05,
+                dur - 0.05,
+                "sawtooth",
+                0.22,
+              ); // E6
+              this.playTone(1567.98, start + 0.1, dur - 0.1, "sawtooth", 0.22); // G6
+            }
           });
 
-          [1568, 1865, 2093, 2489, 3136].forEach((freq, i) => {
-            this.playTone(freq, 0.15 + i * 0.07, 0.22, "sine", 0.08);
-          });
+          // 2. Sorak-Sorai Penonton (Crowd Cheer ganda yang panjang)
+          this.playCrowdCheer();
+          setTimeout(() => this.playCrowdCheer(), 400);
+
+          // 3. Ledakan Pesta Kembang Api (Fireworks Explosion Effect)
+          for (let i = 0; i < 6; i++) {
+            const delay = 0.1 + i * 0.28;
+            this.playNoiseBurst(delay, 0.45, 0.35, 1800);
+            this.playTone(90 + Math.random() * 50, delay, 0.3, "sine", 0.4); // Dentuman bass kembang api
+          }
+
+          // 4. Denting Glitter/Chime Berkilauan (Sparkle Cascade)
+          for (let i = 0; i < 14; i++) {
+            const freq = 1600 + Math.random() * 2200;
+            this.playTone(freq, 0.3 + i * 0.07, 0.18, "sine", 0.12);
+          }
+
+          this.playHoorayVoices();
         }
 
         playCrowdCheer() {
           try {
             const t = this.ctx.currentTime;
             const src = this.ctx.createBufferSource();
-            src.buffer = this.createNoiseBuffer(2.4);
+            src.buffer = this.createNoiseBuffer(2.6);
             const band = this.ctx.createBiquadFilter();
             band.type = "bandpass";
             band.frequency.setValueAtTime(900, t);
             band.frequency.linearRampToValueAtTime(1400, t + 0.35);
-            band.frequency.linearRampToValueAtTime(1100, t + 1.8);
             band.Q.value = 1.1;
             const gain = this.ctx.createGain();
             gain.gain.setValueAtTime(0.0001, t);
-            gain.gain.exponentialRampToValueAtTime(0.28, t + 0.12);
-            gain.gain.setValueAtTime(0.24, t + 0.9);
-            gain.gain.exponentialRampToValueAtTime(0.0001, t + 2.2);
+            gain.gain.exponentialRampToValueAtTime(0.3, t + 0.12);
+            gain.gain.exponentialRampToValueAtTime(0.0001, t + 2.4);
             src.connect(band);
             band.connect(gain);
             gain.connect(this.ctx.destination);
             src.start(t);
-            src.stop(t + 2.3);
+            src.stop(t + 2.5);
           } catch (e) {}
         }
 
@@ -926,7 +928,6 @@
             { start: 310, peak: 560, end: 420, delay: 0.05 },
             { start: 250, peak: 490, end: 360, delay: 0.09 },
             { start: 340, peak: 620, end: 470, delay: 0.14 },
-            { start: 220, peak: 440, end: 330, delay: 0.18 },
           ];
 
           voices.forEach((voice) => {
@@ -941,10 +942,9 @@
               osc.frequency.linearRampToValueAtTime(voice.end, t + 0.85);
               formant.type = "bandpass";
               formant.frequency.setValueAtTime(700, t);
-              formant.frequency.linearRampToValueAtTime(1250, t + 0.2);
               formant.Q.value = 4;
               gain.gain.setValueAtTime(0.0001, t);
-              gain.gain.exponentialRampToValueAtTime(0.16, t + 0.05);
+              gain.gain.exponentialRampToValueAtTime(0.18, t + 0.05);
               gain.gain.exponentialRampToValueAtTime(0.0001, t + 1.15);
               osc.connect(formant);
               formant.connect(gain);
@@ -962,7 +962,6 @@
       const canvas = document.getElementById("wheel-canvas");
       const ctx = canvas.getContext("2d");
 
-      // Color Palette for Slices
       const sliceColors = [
         "#062c19",
         "#0d5c3a",
@@ -992,7 +991,6 @@
         const radius = Math.min(centerX, centerY) - 12;
 
         ctx.clearRect(0, 0, width, height);
-
         if (width === 0 || height === 0) return;
 
         // Outer Glowing Gold Rim
@@ -1006,8 +1004,6 @@
         ctx.stroke();
 
         const total = state.participants.length;
-
-        // Determine visible slices (Maximum 24 segments rendered for UI performance & aesthetics)
         const displaySlices = total > 0 ? Math.min(total, 20) : 12;
         const sliceAngle = (2 * Math.PI) / displaySlices;
 
@@ -1018,7 +1014,6 @@
         for (let i = 0; i < displaySlices; i++) {
           const angle = i * sliceAngle;
 
-          // Slice Fill
           ctx.beginPath();
           ctx.moveTo(0, 0);
           ctx.arc(0, 0, radius, angle, angle + sliceAngle);
@@ -1027,12 +1022,10 @@
           ctx.fillStyle = sliceColors[i % sliceColors.length];
           ctx.fill();
 
-          // Slice Border Line
           ctx.lineWidth = 1.5;
           ctx.strokeStyle = "#03170d";
           ctx.stroke();
 
-          // Slice Label Text
           ctx.save();
           ctx.rotate(angle + sliceAngle / 2);
           ctx.textAlign = "right";
@@ -1048,14 +1041,12 @@
           } else if (total <= 20) {
             label = state.participants[i];
           } else {
-            // Group/Index Band representation when participant list is large
             const groupSize = Math.ceil(total / displaySlices);
             const startIdx = i * groupSize + 1;
             const endIdx = Math.min((i + 1) * groupSize, total);
             label = `#${startIdx}-${endIdx}`;
           }
 
-          // Truncate text if too long
           if (label.length > 14) label = label.substring(0, 12) + "...";
 
           ctx.fillText(label, radius - 20, 4);
@@ -1064,7 +1055,7 @@
 
         ctx.restore();
 
-        // Decorative Dots on Rim
+        // Decorative Dots
         const numDots = 24;
         for (let i = 0; i < numDots; i++) {
           const dotAngle = (i * (2 * Math.PI)) / numDots;
@@ -1078,14 +1069,11 @@
         }
       }
 
-      // UI & Input Data Processors
       function updateParticipantsList(newList, persist = true) {
-        // Clean empty names and trim
         state.participants = newList
           .map((n) => n.trim())
           .filter((n) => n.length > 0);
 
-        // Update UI elements
         document.getElementById("badge-total-participants").innerText =
           state.participants.length.toLocaleString("id-ID");
         document.getElementById("active-count-text").innerText =
@@ -1116,7 +1104,7 @@
         }
 
         container.innerHTML = filtered
-          .map((name, idx) => {
+          .map((name) => {
             const originalIndex = state.participants.indexOf(name);
             return `
                     <div class="flex items-center justify-between px-3 py-2 bg-brand-darkest/70 rounded-lg border border-emerald-900 text-xs">
@@ -1137,7 +1125,7 @@
         showToast("Peserta berhasil dihapus");
       };
 
-      // File Reader (Excel / CSV) using SheetJS
+      // File Reader
       document
         .getElementById("file-input")
         .addEventListener("change", function (e) {
@@ -1188,7 +1176,7 @@
           e.target.value = "";
         });
 
-      // Spin Logic for parameterized winners
+      // Spin Logic
       function triggerSpin() {
         if (state.isSpinning) return;
 
@@ -1209,7 +1197,7 @@
         }
 
         sound.init();
-        sound.startDrumroll();
+        sound.startSpinSound(state.wheelRotation);
         state.isSpinning = true;
         disableControls(true);
 
@@ -1223,12 +1211,9 @@
           availablePool.splice(randIndex, 1);
         }
 
-        // Animation Settings
         const durationMs = state.duration * 1000;
         const startTime = performance.now();
         const startRotation = state.wheelRotation;
-
-        // Extra spins (5 to 10 full turns) + random target angle
         const totalTargetRotation =
           startRotation + Math.PI * 2 * (6 + Math.random() * 4);
 
@@ -1236,25 +1221,30 @@
           const elapsed = currentTime - startTime;
           const progress = Math.min(elapsed / durationMs, 1);
 
-          // Cubic-bezier Ease-Out deceleration
           const easeOut = 1 - Math.pow(1 - progress, 4);
           state.wheelRotation =
             startRotation + (totalTargetRotation - startRotation) * easeOut;
 
-          sound.updateDrumroll(progress);
-
+          sound.updateSpinSound(state.wheelRotation, progress);
           drawWheel();
 
           if (progress < 1) {
             state.animationFrameId = requestAnimationFrame(animateWheel);
           } else {
-            // Spin finished!
+            // Spin Selesai
             state.isSpinning = false;
             disableControls(false);
-            sound.stopDrumroll();
-            sound.playHooray();
+            sound.stopSpinSound();
 
-            // Save History
+            // Pemicu Suara & Konfeti Berdasarkan Jumlah Pemenang
+            if (winners.length === 1) {
+              sound.playGrandWinnerSound();
+              fireGrandConfetti();
+            } else {
+              sound.playHooray();
+              fireConfetti();
+            }
+
             state.roundCount++;
             document.getElementById("badge-total-rounds").innerText =
               state.roundCount;
@@ -1271,11 +1261,8 @@
             persistState();
             renderHistoryTab();
 
-            // Show Winners Modal & Confetti
             displayWinnerModal(historyRecord);
-            fireConfetti();
 
-            // Auto Remove logic if enabled
             if (state.autoRemoveWinners) {
               removeWinnersFromPool(winners, false);
             }
@@ -1285,42 +1272,86 @@
         requestAnimationFrame(animateWheel);
       }
 
+      // DISPLAY WINNER MODAL (DIFERENSIASI UNTUK 1 PEMENANG VS BANYAK PEMENANG)
       function displayWinnerModal(record) {
         const modal = document.getElementById("winner-modal");
         const grid = document.getElementById("modal-winners-grid");
-        document.getElementById("modal-winners-title").innerText =
-          `${record.winners.length} ORANG TERPILIH!`;
-        document.getElementById("btn-copy-winners-label").innerText =
-          `Salin ${record.winners.length} Nama`;
-        document.getElementById("modal-round-subtitle").innerText =
-          `Hasil Undian Putaran Ke-${record.round} (${record.winners.length} Orang Terpilih)`;
+        const isSingleWinner = record.winners.length === 1;
 
-        grid.innerHTML = record.winners
-          .map((name, idx) => {
-            let badgeStyle = "bg-brand-medium text-white border-emerald-500";
-            if (idx === 0)
-              badgeStyle =
-                "bg-gradient-to-r from-amber-300 to-yellow-500 text-slate-950 font-black border-yellow-300";
-            else if (idx === 1)
-              badgeStyle =
-                "bg-slate-300 text-slate-950 font-bold border-slate-100";
-            else if (idx === 2)
-              badgeStyle =
-                "bg-amber-700 text-amber-100 font-bold border-amber-500";
+        const copyLabel = document.getElementById("btn-copy-winners-label");
+        if (copyLabel) {
+          copyLabel.innerText = isSingleWinner
+            ? "Salin Nama"
+            : `Salin ${record.winners.length} Nama`;
+        }
 
-            return `
-                    <div class="flex items-center gap-3 p-3 bg-brand-darkest/90 rounded-2xl border border-emerald-800/80 shadow-md">
-                        <div class="w-8 h-8 rounded-xl flex items-center justify-center text-xs border ${badgeStyle} shrink-0">
-                            #${idx + 1}
-                        </div>
-                        <div class="text-sm font-bold text-slate-100 truncate flex-grow">
-                            ${escapeHtml(name)}
-                        </div>
-                        <i class="fa-solid fa-circle-check text-brand-gold text-sm pr-1"></i>
-                    </div>
-                `;
-          })
-          .join("");
+        if (isSingleWinner) {
+          // --- FORMAT LAYOUT KHUSUS 1 PEMENANG (TERPAMBANG BESAR & MERIAH) ---
+          document.getElementById("modal-winners-title").innerText =
+            "SELAMAT KEPADA";
+          document.getElementById("modal-round-subtitle").innerText = ``;
+
+          grid.className = "flex flex-col items-center justify-center my-4 p-2";
+          grid.innerHTML = `
+            <div class="winner-featured-anim w-full max-w-lg p-6 sm:p-10 rounded-3xl bg-gradient-to-b from-brand-dark via-brand-darkest to-brand-dark border-2 border-brand-gold shadow-2xl flex flex-col items-center justify-center relative overflow-hidden text-center">
+              <!-- Glow Ornaments Background -->
+              <div class="absolute -top-12 -right-12 w-36 h-36 bg-brand-gold/25 rounded-full blur-2xl pointer-events-none"></div>
+              <div class="absolute -bottom-12 -left-12 w-36 h-36 bg-brand-accent/20 rounded-full blur-2xl pointer-events-none"></div>
+
+              <!-- Crown Icon Header -->
+              <div class="inline-flex items-center justify-center w-20 h-20 rounded-full bg-gradient-to-tr from-amber-300 via-brand-gold to-yellow-600 text-slate-950 text-4xl shadow-2xl mb-4 border-2 border-yellow-200 shrink-0">
+                <i class="fa-solid fa-crown drop-shadow-md"></i>
+              </div>
+
+              <span class="text-xs uppercase tracking-widest font-extrabold text-emerald-300 mb-1">
+                <i class="fa-solid fa-sparkles text-brand-gold mr-1"></i> PESERTA TERPILIH <i class="fa-solid fa-sparkles text-brand-gold ml-1"></i>
+              </span>
+
+              <!-- NAMA PEMENANG UTAMA DENGAN TEKS SUPER BESAR & MENOLONJOL -->
+              <h1 class="text-3xl sm:text-5xl md:text-6xl font-black gold-gradient-text tracking-wide break-words max-w-full my-3 px-2 leading-tight drop-shadow-lg">
+                ${escapeHtml(record.winners[0])}
+              </h1>
+
+              <!-- Badge Putaran -->
+             
+            </div>
+          `;
+        } else {
+          // --- FORMAT LAYOUT DAFTAR BANYAK PEMENANG ---
+          document.getElementById("modal-winners-title").innerText =
+            `${record.winners.length} ORANG TERPILIH!`;
+          document.getElementById("modal-round-subtitle").innerText =
+            `Selamat kepada para peserta terpilih putaran ke-${record.round}`;
+
+          grid.className =
+            "grid grid-cols-1 sm:grid-cols-2 gap-2.5 overflow-y-auto my-2 p-2 text-left max-h-[340px]";
+          grid.innerHTML = record.winners
+            .map((name, idx) => {
+              let badgeStyle = "bg-brand-medium text-white border-emerald-500";
+              if (idx === 0)
+                badgeStyle =
+                  "bg-gradient-to-r from-amber-300 to-yellow-500 text-slate-950 font-black border-yellow-300";
+              else if (idx === 1)
+                badgeStyle =
+                  "bg-slate-300 text-slate-950 font-bold border-slate-100";
+              else if (idx === 2)
+                badgeStyle =
+                  "bg-amber-700 text-amber-100 font-bold border-amber-500";
+
+              return `
+                      <div class="flex items-center gap-3 p-3 bg-brand-darkest/90 rounded-2xl border border-emerald-800/80 shadow-md">
+                          <div class="w-8 h-8 rounded-xl flex items-center justify-center text-xs border ${badgeStyle} shrink-0">
+                              #${idx + 1}
+                          </div>
+                          <div class="text-sm font-bold text-slate-100 truncate flex-grow">
+                              ${escapeHtml(name)}
+                          </div>
+                          <i class="fa-solid fa-circle-check text-brand-gold text-sm pr-1"></i>
+                      </div>
+                  `;
+            })
+            .join("");
+        }
 
         modal.classList.remove("hidden");
         setTimeout(() => {
@@ -1328,7 +1359,6 @@
           modal.children[0].classList.remove("scale-95");
         }, 10);
 
-        // Store current round winners for copy action
         window.currentModalWinners = record.winners;
       }
 
@@ -1364,7 +1394,7 @@
           cancelAnimationFrame(state.animationFrameId);
           state.animationFrameId = null;
         }
-        sound.stopDrumroll(true);
+        sound.stopSpinSound(true);
         state.participants = [];
         state.winnersHistory = [];
         state.roundCount = 0;
@@ -1372,7 +1402,7 @@
         state.soundEnabled = true;
         state.autoRemoveWinners = true;
         state.duration = 6;
-        state.winnerCount = 10;
+        state.winnerCount = 1;
         state.wheelRotation = 0;
         window.currentModalWinners = null;
 
@@ -1382,7 +1412,7 @@
         document.getElementById("search-participant").value = "";
         document.getElementById("select-duration").value = "6";
         document.getElementById("chk-auto-remove").checked = true;
-        document.getElementById("input-winner-count").value = "10";
+        document.getElementById("input-winner-count").value = "1";
         document.getElementById("badge-total-rounds").innerText = "0";
         document.getElementById("icon-sound").className =
           "fa-solid fa-volume-high text-brand-gold";
@@ -1408,37 +1438,49 @@
           );
       }
 
+      // Konfeti Standar
       function fireConfetti() {
         if (typeof confetti === "function") {
           confetti({
-            particleCount: 180,
-            spread: 100,
+            particleCount: 160,
+            spread: 90,
             origin: { y: 0.6 },
             colors: ["#d4af37", "#ffe066", "#20bf55", "#137547", "#ffffff"],
           });
-          setTimeout(() => {
+        }
+      }
+
+      // Konfeti Ekstra Meriah Beruntun Khusus Pemenang Tunggal
+      function fireGrandConfetti() {
+        if (typeof confetti === "function") {
+          const duration = 2.5 * 1000;
+          const animationEnd = Date.now() + duration;
+
+          const interval = setInterval(function () {
+            const timeLeft = animationEnd - Date.now();
+            if (timeLeft <= 0) return clearInterval(interval);
+
+            const particleCount = 40 * (timeLeft / duration);
             confetti({
-              particleCount: 80,
-              angle: 60,
-              spread: 70,
-              origin: { x: 0 },
-              colors: ["#d4af37", "#ffe066", "#20bf55"],
+              particleCount,
+              spread: 100,
+              origin: { x: Math.random() * 0.4 + 0.1, y: Math.random() - 0.2 },
+              colors: ["#d4af37", "#ffe066", "#ffffff", "#20bf55"],
             });
             confetti({
-              particleCount: 80,
-              angle: 120,
-              spread: 70,
-              origin: { x: 1 },
-              colors: ["#d4af37", "#ffe066", "#20bf55"],
+              particleCount,
+              spread: 100,
+              origin: { x: Math.random() * 0.4 + 0.5, y: Math.random() - 0.2 },
+              colors: ["#d4af37", "#ffe066", "#ffffff", "#20bf55"],
             });
-          }, 250);
+          }, 200);
         }
       }
 
       function renderHistoryTab() {
         const container = document.getElementById("history-rounds-container");
         if (state.winnersHistory.length === 0) {
-          container.innerHTML = `<div class="text-center py-8 text-emerald-600/70 text-xs">Belum ada riwayat undian.</div>`;
+          container.innerHTML = `<div class="text-center py-8 text-emerald-600/70 text-xs">Belum ada riwayat.</div>`;
           return;
         }
 
@@ -1451,7 +1493,7 @@
                             <span class="text-emerald-400/70 text-[10px]">${rec.time}</span>
                         </div>
                         <ol class="grid grid-cols-2 gap-1 font-medium text-emerald-200 pl-1">
-                            ${rec.winners.map((w, i) => `<li class="truncate"><span class="text-emerald-500 font-bold mr-1">${i + 1}.</span> ${escapeHtml(w)}</li>`).join("")}
+                            ${rec.winners.map((w, i) => `<li class="truncate"><span class="text-emerald-500 font-bold mr-1">${i + 1}.</span>${escapeHtml(w)}</li>`).join("")}
                         </ol>
                     </div>
                 `;
@@ -1585,7 +1627,7 @@
           });
         });
 
-        // Save / Update List from Textarea
+        // Save / Update List
         document
           .getElementById("btn-save-list")
           .addEventListener("click", () => {
@@ -1604,7 +1646,7 @@
             showToast("Daftar peserta dikosongkan.");
           });
 
-        // Search Participant Live
+        // Search Participant
         document
           .getElementById("search-participant")
           .addEventListener("input", renderParticipantsTab);
@@ -1619,7 +1661,7 @@
               : "fa-solid fa-volume-xmark text-slate-500";
             document.getElementById("label-sound").innerText =
               state.soundEnabled ? "Suara: Aktif" : "Suara: Mute";
-            if (!state.soundEnabled) sound.stopDrumroll(true);
+            if (!state.soundEnabled) sound.stopSpinSound(true);
             persistState();
           });
 
@@ -1667,7 +1709,7 @@
                 .writeText(text)
                 .then(() => {
                   showToast(
-                    `${window.currentModalWinners.length} nama pemenang berhasil disalin!`,
+                    `${window.currentModalWinners.length} nama peserta terpilih berhasil disalin!`,
                   );
                 })
                 .catch(() => {
@@ -1690,12 +1732,15 @@
           .getElementById("btn-export-csv")
           .addEventListener("click", () => {
             if (state.winnersHistory.length === 0) {
-              showToast("Belum ada riwayat undian untuk di-export.", "error");
+              showToast(
+                "Belum ada riwayat spin wheel untuk di-export.",
+                "error",
+              );
               return;
             }
 
             let csvContent =
-              "data:text/csv;charset=utf-8,Putaran,Waktu,Peringkat,Nama Pemenang\n";
+              "data:text/csv;charset=utf-8,Putaran,Waktu,Peringkat,Nama Peserta Terpilih\n";
             state.winnersHistory.forEach((rec) => {
               rec.winners.forEach((w, idx) => {
                 csvContent += `${rec.round},"${rec.time}",${idx + 1},"${w.replace(/"/g, '""')}"\n`;
@@ -1707,7 +1752,7 @@
             link.setAttribute("href", encodedUri);
             link.setAttribute(
               "download",
-              `Hasil_Undian_SpinWheel_${new Date().toISOString().slice(0, 10)}.csv`,
+              `Hasil_SpinWheel_${new Date().toISOString().slice(0, 10)}.csv`,
             );
             document.body.appendChild(link);
             link.click();
@@ -1726,7 +1771,7 @@
           .getElementById("btn-restart-confirm")
           .addEventListener("click", () => {
             resetAppToStart();
-            showToast("Semua data direset. Undian dimulai dari awal.");
+            showToast("Semua data direset. Spin Wheel dimulai dari awal.");
           });
       });
     </script>
