@@ -1,0 +1,1382 @@
+<!doctype html>
+<html lang="id">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Spin Wheel Generator - 10 Pemenang Terpilih</title>
+
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+      tailwind.config = {
+        theme: {
+          extend: {
+            colors: {
+              brand: {
+                darkest: "#03170d",
+                dark: "#062c19",
+                DEFAULT: "#0b4f2c",
+                medium: "#137547",
+                light: "#2a9d8f",
+                accent: "#20bf55",
+                gold: "#d4af37",
+                goldLight: "#f39c12",
+                goldGlow: "#ffe066",
+              },
+            },
+            fontFamily: {
+              sans: ["Plus Jakarta Sans", "Inter", "sans-serif"],
+            },
+          },
+        },
+      };
+    </script>
+
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap"
+      rel="stylesheet"
+    />
+
+    <!-- FontAwesome Icons -->
+    <link
+      rel="stylesheet"
+      href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css"
+    />
+
+    <!-- SheetJS (XLSX) CDN for Excel & CSV Reading -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+
+    <!-- Canvas Confetti CDN -->
+    <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.9.3/dist/confetti.browser.min.js"></script>
+
+    <style>
+      body {
+        font-family: "Plus Jakarta Sans", sans-serif;
+        background: radial-gradient(
+          circle at top center,
+          #093b22 0%,
+          #03170d 100%
+        );
+        min-height: 100vh;
+        color: #f1f5f9;
+      }
+
+      /* Custom Scrollbar */
+      ::-webkit-scrollbar {
+        width: 8px;
+        height: 8px;
+      }
+      ::-webkit-scrollbar-track {
+        background: #062c19;
+      }
+      ::-webkit-scrollbar-thumb {
+        background: #137547;
+        border-radius: 4px;
+      }
+      ::-webkit-scrollbar-thumb:hover {
+        background: #2a9d8f;
+      }
+
+      /* Glassmorphism Card Style */
+      .glass-panel {
+        background: rgba(11, 60, 34, 0.55);
+        backdrop-filter: blur(16px);
+        -webkit-backdrop-filter: blur(16px);
+        border: 1px solid rgba(212, 175, 55, 0.2);
+      }
+
+      .gold-border-glow {
+        box-shadow: 0 0 20px rgba(212, 175, 55, 0.25);
+      }
+
+      .gold-gradient-text {
+        background: linear-gradient(
+          135deg,
+          #ffe066 0%,
+          #d4af37 50%,
+          #f39c12 100%
+        );
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+      }
+
+      /* Wheel Pointer Arrow Pulse */
+      @keyframes pointerPulse {
+        0%,
+        100% {
+          transform: scale(1) translateY(0);
+        }
+        50% {
+          transform: scale(1.1) translateY(-4px);
+        }
+      }
+      .pointer-animated {
+        animation: pointerPulse 2s infinite ease-in-out;
+      }
+
+      /* Modal Fade Animation */
+      .modal-enter {
+        opacity: 0;
+        transform: scale(0.9);
+      }
+      .modal-enter-active {
+        opacity: 1;
+        transform: scale(1);
+        transition: all 0.3s ease-out;
+      }
+    </style>
+  </head>
+  <body
+    class="p-3 sm:p-6 text-slate-100 flex flex-col justify-between min-h-screen"
+  >
+    <!-- Header Navbar -->
+    <header class="max-w-7xl w-full mx-auto mb-6">
+      <div
+        class="glass-panel rounded-2xl p-4 sm:p-5 flex flex-col md:flex-row justify-between items-center gap-4 border border-brand-gold/30"
+      >
+        <div class="flex items-center gap-3 text-center md:text-left">
+          <div
+            class="w-12 h-12 rounded-xl bg-gradient-to-br from-brand-gold to-yellow-600 flex items-center justify-center text-brand-darkest text-2xl shadow-lg shadow-brand-gold/20"
+          >
+            <i
+              class="fa-solid fa-dharmachakra fa-spin-pulse"
+              style="--fa-animation-duration: 12s"
+            ></i>
+          </div>
+          <div>
+            <h1
+              class="text-2xl sm:text-3xl font-extrabold gold-gradient-text tracking-tight"
+            >
+              Spin Wheel 10 Generator
+            </h1>
+            <p class="text-xs sm:text-sm text-emerald-200/80">
+              Undi 10 Pemenang Sekaligus Tanpa Batas Peserta
+            </p>
+          </div>
+        </div>
+
+        <!-- Stats Header Quick Badges -->
+        <div
+          class="flex items-center gap-3 bg-brand-darkest/60 px-4 py-2.5 rounded-xl border border-emerald-800/60 text-xs sm:text-sm"
+        >
+          <div class="flex items-center gap-2 pr-3 border-r border-emerald-800">
+            <i class="fa-solid fa-users text-brand-gold"></i>
+            <div>
+              <span
+                class="text-emerald-400 block text-[10px] uppercase font-bold"
+                >Total Peserta</span
+              >
+              <span
+                id="badge-total-participants"
+                class="font-extrabold text-white text-base"
+                >0</span
+              >
+            </div>
+          </div>
+          <div class="flex items-center gap-2 pl-1">
+            <i class="fa-solid fa-trophy text-emerald-400"></i>
+            <div>
+              <span
+                class="text-emerald-400 block text-[10px] uppercase font-bold"
+                >Total Putaran</span
+              >
+              <span
+                id="badge-total-rounds"
+                class="font-extrabold text-white text-base"
+                >0</span
+              >
+            </div>
+          </div>
+        </div>
+      </div>
+    </header>
+
+    <!-- Main Content Grid -->
+    <main
+      class="max-w-7xl w-full mx-auto grid grid-cols-1 lg:grid-cols-12 gap-6 items-start flex-grow"
+    >
+      <!-- Left Side: Wheel Container & Main Action (7 Cols on LG) -->
+      <section
+        class="lg:col-span-7 flex flex-col items-center glass-panel rounded-3xl p-4 sm:p-6 border border-emerald-700/50 relative overflow-hidden"
+      >
+        <!-- Subtle Radial Light behind Wheel -->
+        <div
+          class="absolute w-96 h-96 bg-brand-medium/20 rounded-full blur-3xl pointer-events-none top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2"
+        ></div>
+
+        <!-- Pointer / Stopper Needle -->
+        <div class="relative z-20 flex justify-center -mb-5 pointer-animated">
+          <div
+            class="w-10 h-12 bg-gradient-to-b from-yellow-300 via-brand-gold to-yellow-600 rounded-t-md shadow-2xl flex items-end justify-center pb-1"
+            style="
+              clip-path: polygon(0 0, 100% 0, 50% 100%);
+              width: 36px;
+              height: 44px;
+            "
+          >
+            <div class="w-2 h-2 rounded-full bg-slate-900 mb-6"></div>
+          </div>
+        </div>
+
+        <!-- Canvas Wheel -->
+        <div
+          class="relative w-full aspect-square max-w-[480px] sm:max-w-[520px] flex items-center justify-center my-2"
+        >
+          <canvas
+            id="wheel-canvas"
+            class="w-full h-full drop-shadow-[0_10px_25px_rgba(0,0,0,0.6)] cursor-pointer"
+          ></canvas>
+
+          <!-- Center Hub Button -->
+          <button
+            id="center-spin-btn"
+            class="absolute w-20 h-20 sm:w-24 sm:h-24 rounded-full bg-gradient-to-br from-yellow-300 via-brand-gold to-yellow-700 text-slate-950 font-black text-sm sm:text-base shadow-2xl border-4 border-brand-darkest hover:scale-105 transition-transform flex flex-col items-center justify-center gap-0.5 z-10 active:scale-95"
+          >
+            <i class="fa-solid fa-play text-lg sm:text-xl"></i>
+            <span>SPIN 10</span>
+          </button>
+        </div>
+
+        <!-- Quick Controls Toolbar -->
+        <div
+          class="w-full mt-4 pt-4 border-t border-emerald-800/60 flex flex-wrap items-center justify-between gap-3 text-xs sm:text-sm"
+        >
+          <!-- Sound Toggle -->
+          <button
+            id="btn-toggle-sound"
+            class="flex items-center gap-2 px-3 py-2 rounded-lg bg-emerald-950/80 border border-emerald-700/60 hover:bg-emerald-900/80 transition-colors"
+          >
+            <i
+              id="icon-sound"
+              class="fa-solid fa-volume-high text-brand-gold"
+            ></i>
+            <span id="label-sound">Suara: Aktif</span>
+          </button>
+
+          <!-- Spin Duration Selector -->
+          <div
+            class="flex items-center gap-2 bg-emerald-950/80 px-3 py-1.5 rounded-lg border border-emerald-700/60"
+          >
+            <span class="text-emerald-300 text-xs">Durasi Putar:</span>
+            <select
+              id="select-duration"
+              class="bg-transparent text-brand-gold font-bold focus:outline-none cursor-pointer text-xs"
+            >
+              <option value="4" class="bg-slate-900 text-white">4 Detik</option>
+              <option value="6" selected class="bg-slate-900 text-white">
+                6 Detik
+              </option>
+              <option value="8" class="bg-slate-900 text-white">8 Detik</option>
+              <option value="10" class="bg-slate-900 text-white">
+                10 Detik
+              </option>
+            </select>
+          </div>
+
+          <!-- Auto Remove Checkbox -->
+          <label
+            class="flex items-center gap-2 cursor-pointer bg-emerald-950/80 px-3 py-2 rounded-lg border border-emerald-700/60 hover:bg-emerald-900/80 transition-colors"
+          >
+            <input
+              type="checkbox"
+              id="chk-auto-remove"
+              checked
+              class="w-4 h-4 rounded text-brand-medium focus:ring-brand-gold bg-slate-900 border-emerald-700"
+            />
+            <span class="text-emerald-200 text-xs"
+              >Hapus Pemenang dari Daftar</span
+            >
+          </label>
+        </div>
+
+        <!-- Big Main Spin Button -->
+        <button
+          id="main-spin-btn"
+          class="w-full mt-5 py-4 px-6 rounded-2xl bg-gradient-to-r from-brand-gold via-yellow-400 to-brand-gold text-slate-950 font-black text-lg sm:text-xl tracking-wide shadow-xl hover:shadow-brand-gold/30 hover:brightness-110 active:scale-[0.99] transition-all flex items-center justify-center gap-3"
+        >
+          <i class="fa-solid fa-bolt text-2xl"></i>
+          <span>PUTAR RODA & UNDI 10 PEMENANG</span>
+        </button>
+      </section>
+
+      <!-- Right Side: Data Inputs & Winner History (5 Cols on LG) -->
+      <section
+        class="lg:col-span-5 flex flex-col glass-panel rounded-3xl border border-emerald-700/50 overflow-hidden"
+      >
+        <!-- Navigation Tabs -->
+        <div class="flex border-b border-emerald-800/80 bg-brand-darkest/70">
+          <button
+            id="tab-btn-input"
+            class="flex-1 py-3 px-4 font-bold text-xs sm:text-sm border-b-2 border-brand-gold text-brand-gold bg-emerald-900/40 transition-all flex items-center justify-center gap-2"
+          >
+            <i class="fa-solid fa-file-import"></i>
+            <span>Input Data</span>
+          </button>
+          <button
+            id="tab-btn-list"
+            class="flex-1 py-3 px-4 font-bold text-xs sm:text-sm text-emerald-300/70 hover:text-white transition-all flex items-center justify-center gap-2 border-b-2 border-transparent"
+          >
+            <i class="fa-solid fa-list-check"></i>
+            <span>Peserta (<span id="tab-count-badge">0</span>)</span>
+          </button>
+          <button
+            id="tab-btn-history"
+            class="flex-1 py-3 px-4 font-bold text-xs sm:text-sm text-emerald-300/70 hover:text-white transition-all flex items-center justify-center gap-2 border-b-2 border-transparent"
+          >
+            <i class="fa-solid fa-history"></i>
+            <span>Riwayat</span>
+          </button>
+        </div>
+
+        <!-- TAB 1: INPUT DATA PANEL -->
+        <div id="tab-content-input" class="p-4 sm:p-5 flex flex-col gap-4">
+          <!-- Quick Actions / Sample Load -->
+          <div class="flex items-center justify-between gap-2">
+            <label
+              class="text-xs font-bold uppercase tracking-wider text-emerald-300 flex items-center gap-1.5"
+            >
+              <i class="fa-solid fa-pen-to-square"></i> Tempel Daftar Nama
+              (Separator Enter)
+            </label>
+            <button
+              id="btn-load-sample"
+              class="text-xs bg-emerald-800/60 hover:bg-emerald-700 border border-emerald-600/50 text-emerald-200 px-2.5 py-1 rounded-md transition-colors flex items-center gap-1"
+            >
+              <i class="fa-solid fa-wand-magic-sparkles text-brand-gold"></i>
+              <span>Muat 50+ Contoh</span>
+            </button>
+          </div>
+
+          <!-- Textarea Copy-Paste -->
+          <textarea
+            id="input-names-area"
+            rows="8"
+            placeholder="Masukkan atau paste daftar nama di sini...&#10;Contoh:&#10;Ahmad Fauzi&#10;Budi Santoso&#10;Citra Dewi&#10;Dian Rahmawati"
+            class="w-full bg-brand-darkest/90 border border-emerald-700/80 rounded-xl p-3 text-sm text-slate-100 placeholder-emerald-800/70 focus:outline-none focus:border-brand-gold focus:ring-1 focus:ring-brand-gold transition-all resize-none"
+          ></textarea>
+
+          <!-- Excel / CSV Upload Box -->
+          <div
+            class="border-2 border-dashed border-emerald-700/70 hover:border-brand-gold/70 rounded-xl p-4 bg-emerald-950/40 text-center cursor-pointer transition-all relative"
+            id="drop-zone"
+          >
+            <input
+              type="file"
+              id="file-input"
+              accept=".xlsx, .xls, .csv"
+              class="absolute inset-0 opacity-0 cursor-pointer w-full h-full"
+            />
+            <div
+              class="flex flex-col items-center justify-center gap-1 pointer-events-none"
+            >
+              <i class="fa-solid fa-file-excel text-2xl text-emerald-400"></i>
+              <span class="text-xs font-semibold text-emerald-200"
+                >Unggah File Excel (.xlsx, .xls) atau .CSV</span
+              >
+              <span class="text-[10px] text-emerald-400/70"
+                >Otomatis membaca kolom pertama data</span
+              >
+            </div>
+          </div>
+
+          <!-- Action Buttons: Apply / Clear -->
+          <div class="flex items-center gap-3 pt-2">
+            <button
+              id="btn-save-list"
+              class="flex-1 py-2.5 px-4 bg-brand-medium hover:bg-brand-light text-white font-bold rounded-xl shadow-md transition-all flex items-center justify-center gap-2 text-sm"
+            >
+              <i class="fa-solid fa-check-double"></i>
+              <span>Simpan / Update Daftar</span>
+            </button>
+            <button
+              id="btn-clear-list"
+              class="py-2.5 px-3 bg-red-950/60 hover:bg-red-900 border border-red-800/60 text-red-300 font-bold rounded-xl transition-all text-sm"
+              title="Kosongkan Semua"
+            >
+              <i class="fa-solid fa-trash-can"></i>
+            </button>
+          </div>
+        </div>
+
+        <!-- TAB 2: LIVE PARTICIPANT LIST -->
+        <div
+          id="tab-content-list"
+          class="p-4 sm:p-5 flex flex-col gap-3 hidden"
+        >
+          <div class="flex items-center justify-between">
+            <span
+              class="text-xs font-bold text-emerald-300 uppercase tracking-wider"
+              >Daftar Peserta Aktif</span
+            >
+            <span
+              id="active-count-text"
+              class="text-xs text-brand-gold font-bold"
+              >0 Peserta</span
+            >
+          </div>
+
+          <!-- Search Input -->
+          <div class="relative">
+            <i
+              class="fa-solid fa-magnifying-glass absolute left-3 top-1/2 -translate-y-1/2 text-emerald-600 text-xs"
+            ></i>
+            <input
+              type="text"
+              id="search-participant"
+              placeholder="Cari nama peserta..."
+              class="w-full bg-brand-darkest/90 border border-emerald-800 rounded-lg pl-8 pr-3 py-1.5 text-xs text-white placeholder-emerald-800 focus:outline-none focus:border-emerald-500"
+            />
+          </div>
+
+          <!-- Scrollable Participants List -->
+          <div
+            id="participants-list-container"
+            class="max-h-[300px] overflow-y-auto space-y-1.5 pr-1 my-1"
+          >
+            <!-- Items inserted via JS -->
+            <div class="text-center py-8 text-emerald-600/70 text-xs">
+              Belum ada peserta terdaftar.
+            </div>
+          </div>
+        </div>
+
+        <!-- TAB 3: HISTORY WINNERS PANEL -->
+        <div
+          id="tab-content-history"
+          class="p-4 sm:p-5 flex flex-col gap-3 hidden"
+        >
+          <div class="flex items-center justify-between">
+            <span
+              class="text-xs font-bold text-emerald-300 uppercase tracking-wider"
+              >Riwayat Hasil Pengundian</span
+            >
+            <button
+              id="btn-export-csv"
+              class="text-xs bg-brand-medium hover:bg-brand-light text-white px-2.5 py-1 rounded-md transition-colors flex items-center gap-1 font-semibold"
+            >
+              <i class="fa-solid fa-file-export"></i> Export CSV
+            </button>
+          </div>
+
+          <!-- History Rounds Container -->
+          <div
+            id="history-rounds-container"
+            class="max-h-[320px] overflow-y-auto space-y-3 pr-1 my-1"
+          >
+            <div class="text-center py-8 text-emerald-600/70 text-xs">
+              Belum ada riwayat undian.
+            </div>
+          </div>
+        </div>
+      </section>
+    </main>
+
+    <!-- WINNER MODAL POPUP (10 WINNERS REVEAL) -->
+    <div
+      id="winner-modal"
+      class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/80 backdrop-blur-md hidden transition-opacity duration-300 opacity-0"
+    >
+      <div
+        class="glass-panel w-full max-w-2xl rounded-3xl border-2 border-brand-gold gold-border-glow p-6 sm:p-8 flex flex-col max-h-[90vh] relative overflow-hidden text-center transform scale-95 transition-transform duration-300"
+      >
+        <!-- Close Button Top Right -->
+        <button
+          id="btn-close-modal"
+          class="absolute top-4 right-4 w-9 h-9 rounded-full bg-emerald-950 border border-emerald-700 text-emerald-300 hover:text-white hover:bg-emerald-800 flex items-center justify-center transition-colors"
+        >
+          <i class="fa-solid fa-xmark text-lg"></i>
+        </button>
+
+        <!-- Modal Header Header -->
+        <div class="mb-4">
+          <div
+            class="inline-flex items-center justify-center w-16 h-16 rounded-full bg-gradient-to-tr from-brand-gold via-yellow-300 to-yellow-600 text-slate-950 text-3xl shadow-lg mb-2"
+          >
+            <i class="fa-solid fa-trophy"></i>
+          </div>
+          <h2 class="text-2xl sm:text-3xl font-black gold-gradient-text">
+            10 ORANG TERPILIH!
+          </h2>
+          <p
+            id="modal-round-subtitle"
+            class="text-xs sm:text-sm text-emerald-200/80"
+          >
+            Selamat kepada para pemenang undian putaran ini
+          </p>
+        </div>
+
+        <!-- 10 Winners Grid List -->
+        <div
+          id="modal-winners-grid"
+          class="grid grid-cols-1 sm:grid-cols-2 gap-2.5 overflow-y-auto my-2 p-2 text-left max-h-[340px]"
+        >
+          <!-- 10 Winners Cards Rendered by JS -->
+        </div>
+
+        <!-- Modal Footer Controls -->
+        <div
+          class="mt-5 pt-4 border-t border-emerald-800/80 flex flex-wrap items-center justify-center sm:justify-between gap-3"
+        >
+          <button
+            id="btn-copy-winners"
+            class="px-4 py-2.5 rounded-xl bg-emerald-800 hover:bg-emerald-700 text-emerald-100 font-bold text-xs sm:text-sm transition-all flex items-center gap-2"
+          >
+            <i class="fa-solid fa-copy text-brand-gold"></i>
+            <span>Salin 10 Nama</span>
+          </button>
+
+          <div class="flex items-center gap-2">
+            <button
+              id="btn-remove-winners-modal"
+              class="px-4 py-2.5 rounded-xl bg-red-950 hover:bg-red-900 border border-red-800/80 text-red-200 font-bold text-xs sm:text-sm transition-all flex items-center gap-2"
+            >
+              <i class="fa-solid fa-user-minus"></i>
+              <span>Hapus Pemenang Dari Pool</span>
+            </button>
+            <button
+              id="btn-close-modal-main"
+              class="px-5 py-2.5 rounded-xl bg-gradient-to-r from-brand-gold to-yellow-500 text-slate-950 font-black text-xs sm:text-sm transition-all hover:brightness-110"
+            >
+              Selesai
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Notification Toast Box -->
+    <div
+      id="toast-container"
+      class="fixed bottom-5 right-5 z-50 flex flex-col gap-2 pointer-events-none"
+    ></div>
+
+    <!-- Footer Credit -->
+    <footer
+      class="max-w-7xl w-full mx-auto mt-6 text-center text-xs text-emerald-500/60 py-2"
+    >
+      Spin Wheel Generator &copy; 2026 &bull; Tema Dominan Hijau Tua & Emas
+      &bull; Siap Mengolah Ribuan Data Peserta
+    </footer>
+
+    <!-- JAVASCRIPT LOGIC -->
+    <script>
+      // Global App State
+      const state = {
+        participants: [],
+        winnersHistory: [], // Array of { round: 1, date: '', winners: [] }
+        roundCount: 0,
+        isSpinning: false,
+        soundEnabled: true,
+        autoRemoveWinners: true,
+        duration: 6, // Seconds
+        wheelRotation: 0,
+        animationFrameId: null,
+      };
+
+      // Sample Data 50+ Names
+      const SAMPLE_NAMES = [
+        "Ahmad Fauzi",
+        "Budi Santoso",
+        "Citra Dewi",
+        "Dian Rahmawati",
+        "Eko Prasetyo",
+        "Fani Lestari",
+        "Gita Gutawa",
+        "Hendra Wijaya",
+        "Indah Permata",
+        "Joko Widodo",
+        "Kartika Putri",
+        "Laksana Utama",
+        "Maya Indah",
+        "Nugroho Adhi",
+        "Oktavia Nur",
+        "Pratama Putra",
+        "Qori Sandioriva",
+        "Rian Hidayat",
+        "Siti Nurhaliza",
+        "Taufik Hidayat",
+        "Utami Rahayu",
+        "Vina Panduwinata",
+        "Wahyu Setiawan",
+        "Xavier Malik",
+        "Yulia Supriyati",
+        "Zainal Abidin",
+        "Agus Harimurti",
+        "Bambang Pamungkas",
+        "Cinta Laura",
+        "Deni Cagur",
+        "Erwin Gutawa",
+        "Febri Hariyadi",
+        "Gading Marten",
+        "Hamish Daud",
+        "Irfan Bachdim",
+        "Jessica Mila",
+        "Kaesang Pangarep",
+        "Luna Maya",
+        "Maudy Ayunda",
+        "Nicholas Saputra",
+        "Olla Ramlan",
+        "Pevita Pearce",
+        "Raffi Ahmad",
+        "Sule Sutisna",
+        "Titi Kamal",
+        "Uus Rizky",
+        "Vidi Aldiano",
+        "Wika Salim",
+        "Yura Yunita",
+        "Zaskia Gotik",
+      ];
+
+      // Web Audio API Synth Generator
+      class SoundEngine {
+        constructor() {
+          this.ctx = null;
+        }
+
+        init() {
+          if (!this.ctx) {
+            const AudioCtx = window.AudioContext || window.webkitAudioContext;
+            if (AudioCtx) this.ctx = new AudioCtx();
+          }
+          if (this.ctx && this.ctx.state === "suspended") {
+            this.ctx.resume();
+          }
+        }
+
+        playTick() {
+          if (!state.soundEnabled) return;
+          this.init();
+          if (!this.ctx) return;
+
+          try {
+            const osc = this.ctx.createOscillator();
+            const gain = this.ctx.createGain();
+
+            osc.type = "sine";
+            osc.frequency.setValueAtTime(600, this.ctx.currentTime);
+            osc.frequency.exponentialRampToValueAtTime(
+              120,
+              this.ctx.currentTime + 0.04,
+            );
+
+            gain.gain.setValueAtTime(0.15, this.ctx.currentTime);
+            gain.gain.exponentialRampToValueAtTime(
+              0.001,
+              this.ctx.currentTime + 0.04,
+            );
+
+            osc.connect(gain);
+            gain.connect(this.ctx.destination);
+
+            osc.start();
+            osc.stop(this.ctx.currentTime + 0.04);
+          } catch (e) {}
+        }
+
+        playFanfare() {
+          if (!state.soundEnabled) return;
+          this.init();
+          if (!this.ctx) return;
+
+          const notes = [523.25, 659.25, 783.99, 1046.5]; // C5, E5, G5, C6
+          notes.forEach((freq, index) => {
+            try {
+              const osc = this.ctx.createOscillator();
+              const gain = this.ctx.createGain();
+
+              osc.type = "triangle";
+              osc.frequency.setValueAtTime(
+                freq,
+                this.ctx.currentTime + index * 0.1,
+              );
+
+              gain.gain.setValueAtTime(0, this.ctx.currentTime + index * 0.1);
+              gain.gain.linearRampToValueAtTime(
+                0.25,
+                this.ctx.currentTime + index * 0.1 + 0.05,
+              );
+              gain.gain.exponentialRampToValueAtTime(
+                0.001,
+                this.ctx.currentTime + index * 0.1 + 0.4,
+              );
+
+              osc.connect(gain);
+              gain.connect(this.ctx.destination);
+
+              osc.start(this.ctx.currentTime + index * 0.1);
+              osc.stop(this.ctx.currentTime + index * 0.1 + 0.4);
+            } catch (e) {}
+          });
+        }
+      }
+
+      const sound = new SoundEngine();
+
+      // Canvas Wheel Renderer
+      const canvas = document.getElementById("wheel-canvas");
+      const ctx = canvas.getContext("2d");
+
+      // Color Palette for Slices
+      const sliceColors = [
+        "#062c19",
+        "#0d5c3a",
+        "#137547",
+        "#0b4f2c",
+        "#2a9d8f",
+        "#20bf55",
+        "#104f32",
+        "#d4af37",
+      ];
+
+      function resizeCanvas() {
+        const rect = canvas.getBoundingClientRect();
+        const dpr = window.devicePixelRatio || 1;
+        canvas.width = rect.width * dpr;
+        canvas.height = rect.height * dpr;
+        ctx.scale(dpr, dpr);
+        drawWheel();
+      }
+
+      function drawWheel() {
+        const rect = canvas.getBoundingClientRect();
+        const width = rect.width;
+        const height = rect.height;
+        const centerX = width / 2;
+        const centerY = height / 2;
+        const radius = Math.min(centerX, centerY) - 12;
+
+        ctx.clearRect(0, 0, width, height);
+
+        if (width === 0 || height === 0) return;
+
+        // Outer Glowing Gold Rim
+        ctx.beginPath();
+        ctx.arc(centerX, centerY, radius + 6, 0, 2 * Math.PI);
+        ctx.fillStyle = "#03170d";
+        ctx.fill();
+
+        ctx.lineWidth = 6;
+        ctx.strokeStyle = "#d4af37";
+        ctx.stroke();
+
+        const total = state.participants.length;
+
+        // Determine visible slices (Maximum 24 segments rendered for UI performance & aesthetics)
+        const displaySlices = total > 0 ? Math.min(total, 20) : 12;
+        const sliceAngle = (2 * Math.PI) / displaySlices;
+
+        ctx.save();
+        ctx.translate(centerX, centerY);
+        ctx.rotate(state.wheelRotation);
+
+        for (let i = 0; i < displaySlices; i++) {
+          const angle = i * sliceAngle;
+
+          // Slice Fill
+          ctx.beginPath();
+          ctx.moveTo(0, 0);
+          ctx.arc(0, 0, radius, angle, angle + sliceAngle);
+          ctx.closePath();
+
+          ctx.fillStyle = sliceColors[i % sliceColors.length];
+          ctx.fill();
+
+          // Slice Border Line
+          ctx.lineWidth = 1.5;
+          ctx.strokeStyle = "#03170d";
+          ctx.stroke();
+
+          // Slice Label Text
+          ctx.save();
+          ctx.rotate(angle + sliceAngle / 2);
+          ctx.textAlign = "right";
+          ctx.fillStyle = i % sliceColors.length === 7 ? "#03170d" : "#f1f5f9";
+          ctx.font =
+            total > 15
+              ? "bold 10px Plus Jakarta Sans"
+              : "bold 12px Plus Jakarta Sans";
+
+          let label = "";
+          if (total === 0) {
+            label = `Peserta ${i + 1}`;
+          } else if (total <= 20) {
+            label = state.participants[i];
+          } else {
+            // Group/Index Band representation when participant list is large
+            const groupSize = Math.ceil(total / displaySlices);
+            const startIdx = i * groupSize + 1;
+            const endIdx = Math.min((i + 1) * groupSize, total);
+            label = `#${startIdx}-${endIdx}`;
+          }
+
+          // Truncate text if too long
+          if (label.length > 14) label = label.substring(0, 12) + "...";
+
+          ctx.fillText(label, radius - 20, 4);
+          ctx.restore();
+        }
+
+        ctx.restore();
+
+        // Decorative Dots on Rim
+        const numDots = 24;
+        for (let i = 0; i < numDots; i++) {
+          const dotAngle = (i * (2 * Math.PI)) / numDots;
+          const dotX = centerX + (radius + 3) * Math.cos(dotAngle);
+          const dotY = centerY + (radius + 3) * Math.sin(dotAngle);
+
+          ctx.beginPath();
+          ctx.arc(dotX, dotY, 2.5, 0, 2 * Math.PI);
+          ctx.fillStyle = i % 2 === 0 ? "#ffe066" : "#ffffff";
+          ctx.fill();
+        }
+      }
+
+      // UI & Input Data Processors
+      function updateParticipantsList(newList) {
+        // Clean empty names and trim
+        state.participants = newList
+          .map((n) => n.trim())
+          .filter((n) => n.length > 0);
+
+        // Update UI elements
+        document.getElementById("badge-total-participants").innerText =
+          state.participants.length.toLocaleString("id-ID");
+        document.getElementById("active-count-text").innerText =
+          `${state.participants.length} Peserta`;
+        document.getElementById("tab-count-badge").innerText =
+          state.participants.length;
+
+        renderParticipantsTab();
+        drawWheel();
+      }
+
+      function renderParticipantsTab() {
+        const container = document.getElementById(
+          "participants-list-container",
+        );
+        const searchVal = document
+          .getElementById("search-participant")
+          .value.toLowerCase();
+
+        const filtered = state.participants.filter((name) =>
+          name.toLowerCase().includes(searchVal),
+        );
+
+        if (filtered.length === 0) {
+          container.innerHTML = `<div class="text-center py-8 text-emerald-600/70 text-xs">Tidak ada peserta ditemukan.</div>`;
+          return;
+        }
+
+        container.innerHTML = filtered
+          .map((name, idx) => {
+            const originalIndex = state.participants.indexOf(name);
+            return `
+                    <div class="flex items-center justify-between px-3 py-2 bg-brand-darkest/70 rounded-lg border border-emerald-900 text-xs">
+                        <span class="text-emerald-200 font-medium truncate max-w-[200px]"><span class="text-brand-gold font-bold mr-1">#${originalIndex + 1}</span> ${escapeHtml(name)}</span>
+                        <button onclick="removeSingleParticipant(${originalIndex})" class="text-red-400 hover:text-red-300 px-1.5 py-0.5 rounded transition-colors" title="Hapus">
+                            <i class="fa-solid fa-xmark"></i>
+                        </button>
+                    </div>
+                `;
+          })
+          .join("");
+      }
+
+      window.removeSingleParticipant = function (index) {
+        if (state.isSpinning) return;
+        state.participants.splice(index, 1);
+        updateParticipantsList(state.participants);
+        showToast("Peserta berhasil dihapus");
+      };
+
+      // File Reader (Excel / CSV) using SheetJS
+      document
+        .getElementById("file-input")
+        .addEventListener("change", function (e) {
+          const file = e.target.files[0];
+          if (!file) return;
+
+          const reader = new FileReader();
+          reader.onload = function (evt) {
+            try {
+              const data = new Uint8Array(evt.target.result);
+              const workbook = XLSX.read(data, { type: "array" });
+              const firstSheetName = workbook.SheetNames[0];
+              const worksheet = workbook.Sheets[firstSheetName];
+              const json = XLSX.utils.sheet_to_json(worksheet, { header: 1 });
+
+              const names = [];
+              json.forEach((row) => {
+                if (row && row[0] !== undefined) {
+                  const val = String(row[0]).trim();
+                  if (
+                    val &&
+                    val.toLowerCase() !== "nama" &&
+                    val.toLowerCase() !== "name"
+                  ) {
+                    names.push(val);
+                  }
+                }
+              });
+
+              if (names.length > 0) {
+                updateParticipantsList([...state.participants, ...names]);
+                document.getElementById("input-names-area").value =
+                  state.participants.join("\n");
+                showToast(
+                  `Berhasil menambahkan ${names.length} nama dari file!`,
+                );
+              } else {
+                showToast(
+                  "Tidak ada data nama yang valid ditemukan di file.",
+                  "error",
+                );
+              }
+            } catch (err) {
+              showToast("Gagal membaca file Excel/CSV.", "error");
+            }
+          };
+          reader.readAsArrayBuffer(file);
+          e.target.value = "";
+        });
+
+      // Spin Logic for 10 Winners
+      function triggerSpin() {
+        if (state.isSpinning) return;
+
+        if (state.participants.length === 0) {
+          showToast(
+            "Daftar peserta masih kosong! Masukkan nama terlebih dahulu.",
+            "error",
+          );
+          return;
+        }
+
+        if (state.participants.length < 10) {
+          showToast(
+            `Jumlah peserta (${state.participants.length}) kurang dari 10. Mengundi semua peserta yang ada.`,
+          );
+        }
+
+        sound.init();
+        state.isSpinning = true;
+        disableControls(true);
+
+        // Calculate Random Winners Array (Exact 10 unique names)
+        const availablePool = [...state.participants];
+        const winners = [];
+        const countToPick = Math.min(10, availablePool.length);
+
+        for (let i = 0; i < countToPick; i++) {
+          const randIndex = Math.floor(Math.random() * availablePool.length);
+          winners.push(availablePool[randIndex]);
+          availablePool.splice(randIndex, 1);
+        }
+
+        // Animation Settings
+        const durationMs = state.duration * 1000;
+        const startTime = performance.now();
+        const startRotation = state.wheelRotation;
+
+        // Extra spins (5 to 10 full turns) + random target angle
+        const totalTargetRotation =
+          startRotation + Math.PI * 2 * (6 + Math.random() * 4);
+
+        let lastTickSegment = -1;
+
+        function animateWheel(currentTime) {
+          const elapsed = currentTime - startTime;
+          const progress = Math.min(elapsed / durationMs, 1);
+
+          // Cubic-bezier Ease-Out deceleration
+          const easeOut = 1 - Math.pow(1 - progress, 4);
+          state.wheelRotation =
+            startRotation + (totalTargetRotation - startRotation) * easeOut;
+
+          // Sound Tick logic
+          const currentSegment =
+            Math.floor(state.wheelRotation / (Math.PI / 6)) % 12;
+          if (currentSegment !== lastTickSegment) {
+            sound.playTick();
+            lastTickSegment = currentSegment;
+          }
+
+          drawWheel();
+
+          if (progress < 1) {
+            state.animationFrameId = requestAnimationFrame(animateWheel);
+          } else {
+            // Spin finished!
+            state.isSpinning = false;
+            disableControls(false);
+            sound.playFanfare();
+
+            // Save History
+            state.roundCount++;
+            document.getElementById("badge-total-rounds").innerText =
+              state.roundCount;
+
+            const historyRecord = {
+              round: state.roundCount,
+              time: new Date().toLocaleTimeString("id-ID", {
+                hour: "2-digit",
+                minute: "2-digit",
+              }),
+              winners: winners,
+            };
+            state.winnersHistory.unshift(historyRecord);
+            renderHistoryTab();
+
+            // Show Winners Modal & Confetti
+            displayWinnerModal(historyRecord);
+            fireConfetti();
+
+            // Auto Remove logic if enabled
+            if (state.autoRemoveWinners) {
+              removeWinnersFromPool(winners, false);
+            }
+          }
+        }
+
+        requestAnimationFrame(animateWheel);
+      }
+
+      function displayWinnerModal(record) {
+        const modal = document.getElementById("winner-modal");
+        const grid = document.getElementById("modal-winners-grid");
+        document.getElementById("modal-round-subtitle").innerText =
+          `Hasil Undian Putaran Ke-${record.round} (${record.winners.length} Orang Terpilih)`;
+
+        grid.innerHTML = record.winners
+          .map((name, idx) => {
+            let badgeStyle = "bg-brand-medium text-white border-emerald-500";
+            if (idx === 0)
+              badgeStyle =
+                "bg-gradient-to-r from-amber-300 to-yellow-500 text-slate-950 font-black border-yellow-300";
+            else if (idx === 1)
+              badgeStyle =
+                "bg-slate-300 text-slate-950 font-bold border-slate-100";
+            else if (idx === 2)
+              badgeStyle =
+                "bg-amber-700 text-amber-100 font-bold border-amber-500";
+
+            return `
+                    <div class="flex items-center gap-3 p-3 bg-brand-darkest/90 rounded-2xl border border-emerald-800/80 shadow-md">
+                        <div class="w-8 h-8 rounded-xl flex items-center justify-center text-xs border ${badgeStyle} shrink-0">
+                            #${idx + 1}
+                        </div>
+                        <div class="text-sm font-bold text-slate-100 truncate flex-grow">
+                            ${escapeHtml(name)}
+                        </div>
+                        <i class="fa-solid fa-circle-check text-brand-gold text-sm pr-1"></i>
+                    </div>
+                `;
+          })
+          .join("");
+
+        modal.classList.remove("hidden");
+        setTimeout(() => {
+          modal.classList.remove("opacity-0");
+          modal.children[0].classList.remove("scale-95");
+        }, 10);
+
+        // Store current round winners for copy action
+        window.currentModalWinners = record.winners;
+      }
+
+      function closeModal() {
+        const modal = document.getElementById("winner-modal");
+        modal.classList.add("opacity-0");
+        modal.children[0].classList.add("scale-95");
+        setTimeout(() => {
+          modal.classList.add("hidden");
+        }, 300);
+      }
+
+      function removeWinnersFromPool(winnersList, notify = true) {
+        const newPool = state.participants.filter(
+          (p) => !winnersList.includes(p),
+        );
+        updateParticipantsList(newPool);
+        document.getElementById("input-names-area").value = newPool.join("\n");
+        if (notify)
+          showToast(
+            `${winnersList.length} pemenang telah dihapus dari daftar peserta.`,
+          );
+      }
+
+      function fireConfetti() {
+        if (typeof confetti === "function") {
+          confetti({
+            particleCount: 120,
+            spread: 80,
+            origin: { y: 0.6 },
+            colors: ["#d4af37", "#ffe066", "#20bf55", "#137547", "#ffffff"],
+          });
+        }
+      }
+
+      function renderHistoryTab() {
+        const container = document.getElementById("history-rounds-container");
+        if (state.winnersHistory.length === 0) {
+          container.innerHTML = `<div class="text-center py-8 text-emerald-600/70 text-xs">Belum ada riwayat undian.</div>`;
+          return;
+        }
+
+        container.innerHTML = state.winnersHistory
+          .map((rec) => {
+            return `
+                    <div class="bg-brand-darkest/80 border border-emerald-800/80 rounded-2xl p-3 text-xs">
+                        <div class="flex items-center justify-between border-b border-emerald-900 pb-2 mb-2">
+                            <span class="font-extrabold text-brand-gold">Putaran #${rec.round}</span>
+                            <span class="text-emerald-400/70 text-[10px]">${rec.time}</span>
+                        </div>
+                        <ol class="grid grid-cols-2 gap-1 font-medium text-emerald-200 pl-1">
+                            ${rec.winners.map((w, i) => `<li class="truncate"><span class="text-emerald-500 font-bold mr-1">${i + 1}.</span> ${escapeHtml(w)}</li>`).join("")}
+                        </ol>
+                    </div>
+                `;
+          })
+          .join("");
+      }
+
+      function disableControls(disabled) {
+        document.getElementById("main-spin-btn").disabled = disabled;
+        document.getElementById("center-spin-btn").disabled = disabled;
+        if (disabled) {
+          document
+            .getElementById("main-spin-btn")
+            .classList.add("opacity-50", "cursor-not-allowed");
+          document
+            .getElementById("center-spin-btn")
+            .classList.add("opacity-50", "cursor-not-allowed");
+        } else {
+          document
+            .getElementById("main-spin-btn")
+            .classList.remove("opacity-50", "cursor-not-allowed");
+          document
+            .getElementById("center-spin-btn")
+            .classList.remove("opacity-50", "cursor-not-allowed");
+        }
+      }
+
+      function showToast(message, type = "info") {
+        const container = document.getElementById("toast-container");
+        const toast = document.createElement("div");
+
+        const bgColor =
+          type === "error"
+            ? "bg-red-900/90 border-red-600 text-red-100"
+            : "bg-emerald-900/90 border-brand-gold text-emerald-100";
+        const icon =
+          type === "error" ? "fa-triangle-exclamation" : "fa-circle-info";
+
+        toast.className = `flex items-center gap-2.5 px-4 py-3 rounded-xl border ${bgColor} text-xs font-semibold shadow-2xl transition-all duration-300 transform translate-y-2 opacity-0 pointer-events-auto`;
+        toast.innerHTML = `<i class="fa-solid ${icon} text-brand-gold text-sm"></i> <span>${escapeHtml(message)}</span>`;
+
+        container.appendChild(toast);
+
+        setTimeout(() => {
+          toast.classList.remove("translate-y-2", "opacity-0");
+        }, 10);
+
+        setTimeout(() => {
+          toast.classList.add("opacity-0", "translate-y-2");
+          setTimeout(() => toast.remove(), 300);
+        }, 3200);
+      }
+
+      function escapeHtml(str) {
+        return str
+          .replace(/&/g, "&amp;")
+          .replace(/</g, "&lt;")
+          .replace(/>/g, "&gt;")
+          .replace(/"/g, "&quot;")
+          .replace(/'/g, "&#039;");
+      }
+
+      // EVENT LISTENERS INITIALIZATION
+      window.addEventListener("DOMContentLoaded", () => {
+        resizeCanvas();
+        window.addEventListener("resize", resizeCanvas);
+
+        // Spin Buttons
+        document
+          .getElementById("main-spin-btn")
+          .addEventListener("click", triggerSpin);
+        document
+          .getElementById("center-spin-btn")
+          .addEventListener("click", triggerSpin);
+
+        // Tab Switchers
+        const tabs = [
+          { btn: "tab-btn-input", content: "tab-content-input" },
+          { btn: "tab-btn-list", content: "tab-content-list" },
+          { btn: "tab-btn-history", content: "tab-content-history" },
+        ];
+
+        tabs.forEach((tab) => {
+          document.getElementById(tab.btn).addEventListener("click", () => {
+            tabs.forEach((t) => {
+              document.getElementById(t.content).classList.add("hidden");
+              document
+                .getElementById(t.btn)
+                .classList.remove(
+                  "border-brand-gold",
+                  "text-brand-gold",
+                  "bg-emerald-900/40",
+                );
+              document
+                .getElementById(t.btn)
+                .classList.add("text-emerald-300/70", "border-transparent");
+            });
+            document.getElementById(tab.content).classList.remove("hidden");
+            document
+              .getElementById(tab.btn)
+              .classList.add(
+                "border-brand-gold",
+                "text-brand-gold",
+                "bg-emerald-900/40",
+              );
+            document
+              .getElementById(tab.btn)
+              .classList.remove("text-emerald-300/70", "border-transparent");
+          });
+        });
+
+        // Save / Update List from Textarea
+        document
+          .getElementById("btn-save-list")
+          .addEventListener("click", () => {
+            const text = document.getElementById("input-names-area").value;
+            const names = text.split("\n");
+            updateParticipantsList(names);
+            showToast("Daftar peserta berhasil diperbarui!");
+          });
+
+        // Clear List
+        document
+          .getElementById("btn-clear-list")
+          .addEventListener("click", () => {
+            document.getElementById("input-names-area").value = "";
+            updateParticipantsList([]);
+            showToast("Daftar peserta dikosongkan.");
+          });
+
+        // Load Sample Data
+        document
+          .getElementById("btn-load-sample")
+          .addEventListener("click", () => {
+            updateParticipantsList(SAMPLE_NAMES);
+            document.getElementById("input-names-area").value =
+              SAMPLE_NAMES.join("\n");
+            showToast("50 data contoh berhasil dimuat!");
+          });
+
+        // Search Participant Live
+        document
+          .getElementById("search-participant")
+          .addEventListener("input", renderParticipantsTab);
+
+        // Sound Toggle
+        document
+          .getElementById("btn-toggle-sound")
+          .addEventListener("click", () => {
+            state.soundEnabled = !state.soundEnabled;
+            document.getElementById("icon-sound").className = state.soundEnabled
+              ? "fa-solid fa-volume-high text-brand-gold"
+              : "fa-solid fa-volume-xmark text-slate-500";
+            document.getElementById("label-sound").innerText =
+              state.soundEnabled ? "Suara: Aktif" : "Suara: Mute";
+          });
+
+        // Duration Selector
+        document
+          .getElementById("select-duration")
+          .addEventListener("change", (e) => {
+            state.duration = parseFloat(e.target.value);
+          });
+
+        // Auto Remove Checkbox
+        document
+          .getElementById("chk-auto-remove")
+          .addEventListener("change", (e) => {
+            state.autoRemoveWinners = e.target.checked;
+          });
+
+        // Modal Controls
+        document
+          .getElementById("btn-close-modal")
+          .addEventListener("click", closeModal);
+        document
+          .getElementById("btn-close-modal-main")
+          .addEventListener("click", closeModal);
+
+        document
+          .getElementById("btn-copy-winners")
+          .addEventListener("click", () => {
+            if (window.currentModalWinners) {
+              const text = window.currentModalWinners
+                .map((w, i) => `${i + 1}. ${w}`)
+                .join("\n");
+              navigator.clipboard
+                .writeText(text)
+                .then(() => {
+                  showToast("10 nama pemenang berhasil disalin!");
+                })
+                .catch(() => {
+                  showToast("Gagal menyalin teks.", "error");
+                });
+            }
+          });
+
+        document
+          .getElementById("btn-remove-winners-modal")
+          .addEventListener("click", () => {
+            if (window.currentModalWinners) {
+              removeWinnersFromPool(window.currentModalWinners, true);
+              closeModal();
+            }
+          });
+
+        // Export History CSV
+        document
+          .getElementById("btn-export-csv")
+          .addEventListener("click", () => {
+            if (state.winnersHistory.length === 0) {
+              showToast("Belum ada riwayat undian untuk di-export.", "error");
+              return;
+            }
+
+            let csvContent =
+              "data:text/csv;charset=utf-8,Putaran,Waktu,Peringkat,Nama Pemenang\n";
+            state.winnersHistory.forEach((rec) => {
+              rec.winners.forEach((w, idx) => {
+                csvContent += `${rec.round},"${rec.time}",${idx + 1},"${w.replace(/"/g, '""')}"\n`;
+              });
+            });
+
+            const encodedUri = encodeURI(csvContent);
+            const link = document.createElement("a");
+            link.setAttribute("href", encodedUri);
+            link.setAttribute(
+              "download",
+              `Hasil_Undian_SpinWheel_${new Date().toISOString().slice(0, 10)}.csv`,
+            );
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+          });
+
+        // Load Initial Sample Data automatically for instant playability
+        updateParticipantsList(SAMPLE_NAMES);
+        document.getElementById("input-names-area").value =
+          SAMPLE_NAMES.join("\n");
+      });
+    </script>
+  </body>
+</html>
